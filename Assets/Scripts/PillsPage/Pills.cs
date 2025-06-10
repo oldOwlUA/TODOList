@@ -51,6 +51,7 @@ public class Pills : MonoBehaviour
         DayRecord data = GetNewRecord();
 
         Record newRecord = Instantiate(_recordObject, _instantiateTarget);
+        newRecord.OnDelete += DeleteClick;
         newRecord.Init(data);
         _instantiatedRecords.Add(newRecord);
 
@@ -60,7 +61,7 @@ public class Pills : MonoBehaviour
 
     private DayRecord GetNewRecord()
     {
-      return  new DayRecord()
+        return new DayRecord()
         {
             Id = new Guid(),
             Day = DateTime.Now.Date,
@@ -105,6 +106,13 @@ public class Pills : MonoBehaviour
         for (int i = 0; i < _records.Count; i++)
         {
             Record newRecord = Instantiate(_recordObject, _instantiateTarget);
+            newRecord.OnDelete += DeleteClick;
+
+            if (_records[i].Id == Guid.Empty)
+            {
+                _records[i].Id = Guid.NewGuid();
+            }
+
             newRecord.Init(_records[i]);
             _instantiatedRecords.Add(newRecord);
         }
@@ -114,9 +122,30 @@ public class Pills : MonoBehaviour
     {
         for (int i = 0; i < _instantiatedRecords.Count; i++)
         {
-            Destroy(_instantiatedRecords[i].gameObject);
+            var record = _instantiatedRecords[i];
+            record.OnDelete -= DeleteClick;
+            Destroy(record.gameObject);
         }
         _instantiatedRecords.Clear();
+    }
+
+    private void DeleteClick(Guid guid)
+    {
+        if (guid == Guid.Empty)
+        {
+            Debug.LogError("Id for delete empty");
+            return;
+        }
+
+        var deleteRecord = _records.Find(x => x.Id == guid);
+        var deleteLine = _instantiatedRecords.Find(x => x.Id == guid);
+
+        if (deleteRecord != null && deleteLine != null)
+        {
+            _records.Remove(deleteRecord);
+            _instantiatedRecords.Remove(deleteLine);
+            Destroy(deleteLine.gameObject);
+        }
     }
 
     private void Save()
