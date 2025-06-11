@@ -1,12 +1,9 @@
 using Newtonsoft.Json;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.RegularExpressions;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Profiling;
 using UnityEngine.UI;
 
 public class Pills : MonoBehaviour
@@ -31,7 +28,30 @@ public class Pills : MonoBehaviour
     {
         _newButton.onClick.AddListener(OnAddClick);
         _saveButton.onClick.AddListener(OnSaveClick);
+        DraggableItem.PositionChanged += OnItemPositionChanged;
         UpdateList();
+    }
+
+    private void OnItemPositionChanged(DraggableItem item, int newIndex)
+    {
+        var record = item.GetComponent<Record>();
+        if (record == null)
+        {
+            return;
+        }
+
+        int oldIndex = _instantiatedRecords.IndexOf(record);
+        if (oldIndex == newIndex || oldIndex < 0 || newIndex < 0 ||
+           oldIndex >= _instantiatedRecords.Count || newIndex >= _instantiatedRecords.Count)
+            return;
+
+        _instantiatedRecords.RemoveAt(oldIndex);
+
+
+        //if (oldIndex < newIndex)
+        //    newIndex--;
+
+        _instantiatedRecords.Insert(newIndex, record);
     }
 
     private void OnDisable()
@@ -51,6 +71,7 @@ public class Pills : MonoBehaviour
         DayRecord data = GetNewRecord();
 
         Record newRecord = Instantiate(_recordObject, _instantiateTarget);
+        newRecord.transform.name = $"{newRecord.transform.name}_{data.Day.ToString("dd-MM-yyyy")}";
         newRecord.OnDelete += DeleteClick;
         newRecord.Init(data);
         _instantiatedRecords.Add(newRecord);
@@ -106,6 +127,7 @@ public class Pills : MonoBehaviour
         for (int i = 0; i < _records.Count; i++)
         {
             Record newRecord = Instantiate(_recordObject, _instantiateTarget);
+            newRecord.transform.name = $"{newRecord.transform.name}_{_records[i].Day.ToString("dd-MM-yyyy")}";
             newRecord.OnDelete += DeleteClick;
 
             if (_records[i].Id == Guid.Empty)
